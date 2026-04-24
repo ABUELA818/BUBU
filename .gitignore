@@ -1,0 +1,19 @@
+# entorno virtual
+venv/
+
+# python
+__pycache__/
+*.pyc
+
+# archivos temporales
+backend/temp/
+
+# sistema
+.DS_Store
+
+# node (por si luego usas frontend)
+node_modules/
+
+# archivos grandes
+*.zip
+*.glb
