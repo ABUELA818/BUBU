@@ -5,6 +5,8 @@ from services.pose_service import detect_pose
 from services.body_metrics import calculate_body_metrics
 from services.body_classifier import classify_body
 from services.recommendation_service import get_recommendations
+from services.product_recommender import recommend_products
+from services.pose_validator import validate_pose
 
 import os
 
@@ -38,14 +40,23 @@ async def upload_image(file: UploadFile = File(...)):
             "error": pose_data
         }
     
+    valid_pose, pose_msg = validate_pose(pose_data)
+
+    if not valid_pose:
+        os.remove(file_path)
+        return {"error": pose_msg}
+    
     metrics = calculate_body_metrics(pose_data)
     classification = classify_body(metrics)
     recommendations = get_recommendations(classification["body_type"])
+    products = recommend_products(classification["body_type"])
 
     return {
     "filename": file.filename,
     "message": "imagen válida",
     "metrics": metrics,
     "classification": classification,
-    "recommendations": recommendations
+    "recommendations": recommendations,
+    "products": products,
+    "landmarks": pose_data
 }
