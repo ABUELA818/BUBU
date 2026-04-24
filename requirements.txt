@@ -24,6 +24,7 @@ pydantic==2.13.3
 pydantic_core==2.46.3
 pyparsing==3.3.2
 python-dateutil==2.9.0.post0
+python-multipart==0.0.26
 six==1.17.0
 sounddevice==0.5.5
 starlette==1.0.0
