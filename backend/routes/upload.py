@@ -4,6 +4,7 @@ from services.image_service import validate_image
 from services.pose_service import detect_pose
 from services.body_metrics import calculate_body_metrics
 from services.body_classifier import classify_body
+from services.recommendation_service import get_recommendations
 
 import os
 
@@ -39,10 +40,12 @@ async def upload_image(file: UploadFile = File(...)):
     
     metrics = calculate_body_metrics(pose_data)
     classification = classify_body(metrics)
+    recommendations = get_recommendations(classification["body_type"])
 
     return {
     "filename": file.filename,
     "message": "imagen válida",
     "metrics": metrics,
-    "classification": classification
+    "classification": classification,
+    "recommendations": recommendations
 }
