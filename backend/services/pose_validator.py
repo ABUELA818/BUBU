@@ -1,36 +1,59 @@
 def validate_pose(landmarks):
-    # índices clave (MediaPipe)
+    issues = []
+
     NOSE = 0
+    LEFT_FOOT = 27
+    RIGHT_FOOT = 28
     LEFT_SHOULDER = 11
     RIGHT_SHOULDER = 12
-    LEFT_HIP = 23
-    RIGHT_HIP = 24
-    LEFT_ANKLE = 27
-    RIGHT_ANKLE = 28
 
-    key_points = [
-        NOSE,
-        LEFT_SHOULDER, RIGHT_SHOULDER,
-        LEFT_HIP, RIGHT_HIP,
-        LEFT_ANKLE, RIGHT_ANKLE
-    ]
+    # 1. Visibilidad general
+    visible_points = [lm for lm in landmarks if lm["visibility"] > 0.5]
 
-    # 1. VISIBILIDAD mínima
-    for idx in key_points:
-        if landmarks[idx]["visibility"] < 0.5:
-            return False, f"Punto clave no visible: {idx}"
+    if len(visible_points) < 20:
+        issues.append({
+            "code": "low_visibility",
+            "message": "No se detecta bien el cuerpo",
+            "suggestion": "Asegúrate de tener buena iluminación y fondo limpio"
+        })
 
-    # 2. CUERPO COMPLETO (pies debajo de cadera)
-    if not (landmarks[LEFT_ANKLE]["y"] > landmarks[LEFT_HIP]["y"] and
-            landmarks[RIGHT_ANKLE]["y"] > landmarks[RIGHT_HIP]["y"]):
-        return False, "Cuerpo incompleto (piernas no visibles)"
+    # 2. Cabeza
+    if landmarks[NOSE]["visibility"] < 0.5:
+        issues.append({
+            "code": "head_not_visible",
+            "message": "No se ve la cabeza",
+            "suggestion": "Ajusta la cámara para incluir tu cabeza completa"
+        })
 
-    # 3. ORIENTACIÓN (hombros alineados)
-    shoulder_diff = abs(
-        landmarks[LEFT_SHOULDER]["x"] - landmarks[RIGHT_SHOULDER]["x"]
-    )
+    # 3. Pies
+    if (landmarks[LEFT_FOOT]["visibility"] < 0.5 and
+        landmarks[RIGHT_FOOT]["visibility"] < 0.5):
+        issues.append({
+            "code": "feet_not_visible",
+            "message": "No se ven los pies",
+            "suggestion": "Aléjate un poco de la cámara"
+        })
 
-    if shoulder_diff < 0.1:
-        return False, "Posible vista lateral (no frontal)"
+    # 4. Escala
+    y_values = [lm["y"] for lm in visible_points]
+    if y_values:
+        height = max(y_values) - min(y_values)
+        if height < 0.5:
+            issues.append({
+                "code": "too_far",
+                "message": "Estás demasiado lejos",
+                "suggestion": "Acércate para ocupar más espacio en la imagen"
+            })
 
-    return True, "Pose válida"
+    # 5. Pose frontal
+    left_shoulder = landmarks[LEFT_SHOULDER]["x"]
+    right_shoulder = landmarks[RIGHT_SHOULDER]["x"]
+
+    if abs(left_shoulder - right_shoulder) < 0.05:
+        issues.append({
+            "code": "bad_pose",
+            "message": "La pose no es frontal",
+            "suggestion": "Ponte de frente a la cámara con los brazos relajados"
+        })
+
+    return issues

@@ -38,9 +38,25 @@ async function uploadImage() {
 
         const data = await response.json();
 
+        // 🔴 AQUÍ VA
+        if (data.error) {
+            resultDiv.innerHTML = `
+                <h3>Problemas detectados</h3>
+                <ul>
+                    ${data.issues.map(issue => `
+                        <li>
+                            <strong>${issue.message}</strong><br>
+                            <small>${issue.suggestion}</small>
+                        </li>
+                    `).join("")}
+                </ul>
+            `;
+            return;
+        }
+
         renderResults(data);
 
-        if (data.landmarks) {
+        if (data.landmarks && DEBUG) {
             drawPose(data.landmarks);
         }
 
