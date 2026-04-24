@@ -1,5 +1,9 @@
 from fastapi import APIRouter, UploadFile, File
+
 from services.image_service import validate_image
+from services.pose_service import detect_pose
+from services.body_metrics import calculate_body_metrics
+from services.body_classifier import classify_body
 
 import os
 
@@ -25,8 +29,20 @@ async def upload_image(file: UploadFile = File(...)):
             "error": result
         }
 
+    pose_ok, pose_data = detect_pose(file_path)
+
+    if not pose_ok:
+        os.remove(file_path)
+        return {
+            "error": pose_data
+        }
+    
+    metrics = calculate_body_metrics(pose_data)
+    classification = classify_body(metrics)
+
     return {
-        "filename": file.filename,
-        "message": "imagen válida",
-        "info": result
-    }
+    "filename": file.filename,
+    "message": "imagen válida",
+    "metrics": metrics,
+    "classification": classification
+}
