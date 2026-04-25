@@ -1,4 +1,5 @@
-from fastapi import APIRouter, UploadFile, File
+from fastapi import APIRouter, UploadFile, File, Form
+from typing import Optional
 
 from services.image_service import validate_image
 from services.pose_service import detect_pose
@@ -16,55 +17,41 @@ UPLOAD_DIR = "backend/temp"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 @router.post("/upload")
-async def upload_image(file: UploadFile = File(...)):
+async def upload_image(
+    file: UploadFile = File(...),
+    height_cm: Optional[float] = Form(None)   # NUEVO
+):
     file_path = os.path.join(UPLOAD_DIR, file.filename)
 
     with open(file_path, "wb") as f:
         content = await file.read()
         f.write(content)
 
-    # VALIDACIÓN
     is_valid, result = validate_image(file_path)
-
     if not is_valid:
         os.remove(file_path)
-        return {
-            "error": result
-        }
+        return {"error": result}
 
     pose_ok, pose_data = detect_pose(file_path)
-
     if not pose_ok:
         os.remove(file_path)
-        return {
-            "error": pose_data
-        }
-    
+        return {"error": pose_data}
+
     issues = validate_pose(pose_data)
-
     if issues:
-        return {
-            "error": True,
-            "issues": issues
-        }
-    
-    valid_pose, pose_msg = validate_pose(pose_data)
+        return {"error": True, "issues": issues}
 
-    if not valid_pose:
-        os.remove(file_path)
-        return {"error": pose_msg}
-    
-    metrics = calculate_body_metrics(pose_data)
-    classification = classify_body(metrics)
+    metrics         = calculate_body_metrics(pose_data, real_height_cm=height_cm)  # NUEVO
+    classification  = classify_body(metrics)
     recommendations = get_recommendations(classification["body_type"])
-    products = recommend_products(classification["body_type"])
+    products        = recommend_products(classification["body_type"])
 
     return {
-    "filename": file.filename,
-    "message": "imagen válida",
-    "metrics": metrics,
-    "classification": classification,
-    "recommendations": recommendations,
-    "products": products,
-    "landmarks": pose_data
-}
+        "filename":        file.filename,
+        "message":         "imagen válida",
+        "metrics":         metrics,
+        "classification":  classification,
+        "recommendations": recommendations,
+        "products":        products,
+        "landmarks":       pose_data
+    }

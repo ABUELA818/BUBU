@@ -6,24 +6,87 @@
 </head>
 <body>
 
-<h1>Sube tu imagen</h1>
+<h1>Virtual Try-On</h1>
 
-<input type="file" id="imageInput" accept="image/*">
+<!-- TABS -->
+<div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('upload')">📁 Subir imagen</button>
+    <button class="tab-btn"        onclick="switchTab('camera')">📷 Cámara en vivo</button>
+</div>
 
-<br><br>
+<!-- TAB: UPLOAD -->
+<div id="tab-upload">
+    <input type="file" id="imageInput" accept="image/*">
+    <br><br>
+    <label><strong>Tu altura (cm):</strong>
+        <input type="number" id="heightInput" placeholder="Ej: 170" min="100" max="220">
+    </label>
+    <br><br>
+    <img id="preview" width="250" style="display:none; border-radius:10px;">
+    <br><br>
+    <button onclick="uploadImage()">Analizar imagen</button>
+</div>
 
-<img id="preview" width="250" style="display:none; border-radius:10px;">
-<canvas id="canvas" width="250" height="400" style="border:1px solid #ccc;"></canvas>
+<!-- TAB: CAMERA -->
+<div id="tab-camera" style="display:none;">
+    <label><strong>Tu altura (cm):</strong>
+        <input type="number" id="heightInputCam" placeholder="Ej: 170" min="100" max="220">
+    </label>
+    <br><br>
 
-<br><br>
+    <div id="cameraContainer">
+        <!-- Silueta guía -->
+        <svg id="silhouette" viewBox="0 0 280 500" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="140" cy="55"  r="32"  fill="none" stroke="#00FF88" stroke-width="2" stroke-dasharray="6,4"/>
+            <line x1="125" y1="85"  x2="120" y2="112" stroke="#00FF88" stroke-width="2" stroke-dasharray="6,4"/>
+            <line x1="155" y1="85"  x2="160" y2="112" stroke="#00FF88" stroke-width="2" stroke-dasharray="6,4"/>
+            <line x1="85"  y1="118" x2="195" y2="118" stroke="#00FF88" stroke-width="2" stroke-dasharray="6,4"/>
+            <line x1="85"  y1="118" x2="60"  y2="215" stroke="#00FF88" stroke-width="2" stroke-dasharray="6,4"/>
+            <line x1="195" y1="118" x2="220" y2="215" stroke="#00FF88" stroke-width="2" stroke-dasharray="6,4"/>
+            <line x1="85"  y1="118" x2="95"  y2="265" stroke="#00FF88" stroke-width="2" stroke-dasharray="6,4"/>
+            <line x1="195" y1="118" x2="185" y2="265" stroke="#00FF88" stroke-width="2" stroke-dasharray="6,4"/>
+            <line x1="95"  y1="265" x2="185" y2="265" stroke="#00FF88" stroke-width="2" stroke-dasharray="6,4"/>
+            <line x1="112" y1="265" x2="108" y2="390" stroke="#00FF88" stroke-width="2" stroke-dasharray="6,4"/>
+            <line x1="168" y1="265" x2="172" y2="390" stroke="#00FF88" stroke-width="2" stroke-dasharray="6,4"/>
+            <line x1="108" y1="390" x2="104" y2="470" stroke="#00FF88" stroke-width="2" stroke-dasharray="6,4"/>
+            <line x1="172" y1="390" x2="176" y2="470" stroke="#00FF88" stroke-width="2" stroke-dasharray="6,4"/>
+        </svg>
 
-<button onclick="uploadImage()">Analizar</button>
+        <video id="cameraFeed" autoplay playsinline></video>
+
+        <div id="cameraOverlay">
+            <p id="feedbackText">Presiona "Iniciar cámara"</p>
+        </div>
+    </div>
+
+    <!-- Score + barra de progreso -->
+    <div id="scoreContainer">
+        <div id="scoreRow">
+            <span>Calidad:</span>
+            <span id="scoreText">—</span>
+        </div>
+        <div id="progressBar">
+            <div id="captureProgress"></div>
+        </div>
+        <small id="progressLabel">Mantén la postura estable para capturar</small>
+    </div>
+
+    <div class="camera-controls">
+        <button id="startCameraBtn" onclick="startCamera()">📷 Iniciar cámara</button>
+        <button id="stopCameraBtn"  onclick="stopCamera()"  style="display:none;">⏹ Detener</button>
+    </div>
+
+    <div id="qualityInfo"></div>
+</div>
+
+<!-- Canvas compartido -->
+<canvas id="canvas" style="border:1px solid #ccc; margin-top:20px; border-radius:8px; max-width:100%;"></canvas>
 
 <h2>Resultado</h2>
-
 <div id="result"></div>
 
 <script src="script.js"></script>
+<script src="camera.js"></script>
 
 </body>
 </html>
