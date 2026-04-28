@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
     <title>Virtual Try-On</title>
     <link rel="stylesheet" href="style.css">
@@ -14,7 +14,7 @@
     <button class="tab-btn"        onclick="switchTab('camera')">📷 Cámara en vivo</button>
 </div>
 
-<!-- TAB: UPLOAD -->
+<!-- TAB: UPLOAD ─────────────────────────────────────────────────────────── -->
 <div id="tab-upload">
     <input type="file" id="imageInput" accept="image/*">
     <br><br>
@@ -27,29 +27,73 @@
     <button onclick="uploadImage()">Analizar imagen</button>
 </div>
 
-<!-- TAB: CAMERA -->
+<!-- TAB: CAMERA ─────────────────────────────────────────────────────────── -->
 <div id="tab-camera" style="display:none;">
+
+    <!-- Fase actual -->
+    <div id="phaseIndicator">
+        <span id="phaseLabel" style="color:#555; font-size:13px; font-weight:bold; letter-spacing:1px;">
+            Presiona "Iniciar cámara"
+        </span>
+    </div>
+
+    <br>
+
     <label><strong>Tu altura (cm):</strong>
         <input type="number" id="heightInputCam" placeholder="Ej: 170" min="100" max="220">
     </label>
     <br><br>
 
+    <!-- Camera view -->
     <div id="cameraContainer">
-        <!-- Silueta guía -->
-        <svg id="silhouette" viewBox="0 0 280 500" xmlns="http://www.w3.org/2000/svg">
+
+        <!-- Silueta FRONTAL (fase 1) -->
+        <svg id="silhouetteFront" viewBox="0 0 280 500" xmlns="http://www.w3.org/2000/svg">
+            <!-- Cabeza -->
             <circle cx="140" cy="55"  r="32"  fill="none" stroke="#00FF88" stroke-width="2" stroke-dasharray="6,4"/>
+            <!-- Cuello -->
             <line x1="125" y1="85"  x2="120" y2="112" stroke="#00FF88" stroke-width="2" stroke-dasharray="6,4"/>
             <line x1="155" y1="85"  x2="160" y2="112" stroke="#00FF88" stroke-width="2" stroke-dasharray="6,4"/>
+            <!-- Hombros -->
             <line x1="85"  y1="118" x2="195" y2="118" stroke="#00FF88" stroke-width="2" stroke-dasharray="6,4"/>
+            <!-- Brazos -->
             <line x1="85"  y1="118" x2="60"  y2="215" stroke="#00FF88" stroke-width="2" stroke-dasharray="6,4"/>
             <line x1="195" y1="118" x2="220" y2="215" stroke="#00FF88" stroke-width="2" stroke-dasharray="6,4"/>
+            <!-- Torso -->
             <line x1="85"  y1="118" x2="95"  y2="265" stroke="#00FF88" stroke-width="2" stroke-dasharray="6,4"/>
             <line x1="195" y1="118" x2="185" y2="265" stroke="#00FF88" stroke-width="2" stroke-dasharray="6,4"/>
+            <!-- Cadera -->
             <line x1="95"  y1="265" x2="185" y2="265" stroke="#00FF88" stroke-width="2" stroke-dasharray="6,4"/>
+            <!-- Piernas -->
             <line x1="112" y1="265" x2="108" y2="390" stroke="#00FF88" stroke-width="2" stroke-dasharray="6,4"/>
             <line x1="168" y1="265" x2="172" y2="390" stroke="#00FF88" stroke-width="2" stroke-dasharray="6,4"/>
             <line x1="108" y1="390" x2="104" y2="470" stroke="#00FF88" stroke-width="2" stroke-dasharray="6,4"/>
             <line x1="172" y1="390" x2="176" y2="470" stroke="#00FF88" stroke-width="2" stroke-dasharray="6,4"/>
+            <!-- Etiqueta -->
+            <text x="140" y="498" text-anchor="middle" fill="#00FF88" font-size="11" opacity="0.7">FRENTE</text>
+        </svg>
+
+        <!-- Silueta PERFIL (fase 2) — oculta por defecto -->
+        <svg id="silhouetteProfile" viewBox="0 0 280 500"
+             xmlns="http://www.w3.org/2000/svg" style="display:none;">
+            <!-- Cabeza (vista lateral) -->
+            <ellipse cx="145" cy="55" rx="28" ry="32"
+                     fill="none" stroke="#FFAA00" stroke-width="2" stroke-dasharray="6,4"/>
+            <!-- Cuello -->
+            <line x1="140" y1="85"  x2="140" y2="112" stroke="#FFAA00" stroke-width="2" stroke-dasharray="6,4"/>
+            <!-- Hombro (un solo punto visible) -->
+            <circle cx="140" cy="120" r="5" fill="none" stroke="#FFAA00" stroke-width="2"/>
+            <!-- Brazo -->
+            <line x1="140" y1="120" x2="155" y2="210" stroke="#FFAA00" stroke-width="2" stroke-dasharray="6,4"/>
+            <!-- Torso -->
+            <line x1="140" y1="120" x2="140" y2="265" stroke="#FFAA00" stroke-width="3" stroke-dasharray="6,4"/>
+            <!-- Cadera -->
+            <circle cx="140" cy="265" r="5" fill="none" stroke="#FFAA00" stroke-width="2"/>
+            <!-- Pierna -->
+            <line x1="140" y1="265" x2="140" y2="390" stroke="#FFAA00" stroke-width="2" stroke-dasharray="6,4"/>
+            <line x1="140" y1="390" x2="140" y2="470" stroke="#FFAA00" stroke-width="2" stroke-dasharray="6,4"/>
+            <!-- Etiqueta -->
+            <text x="140" y="498" text-anchor="middle" fill="#FFAA00" font-size="11" opacity="0.7">PERFIL</text>
         </svg>
 
         <video id="cameraFeed" autoplay playsinline></video>
@@ -62,7 +106,7 @@
     <!-- Score + barra de progreso -->
     <div id="scoreContainer">
         <div id="scoreRow">
-            <span>Calidad:</span>
+            <span>Calidad / Estabilidad:</span>
             <span id="scoreText">—</span>
         </div>
         <div id="progressBar">
@@ -76,11 +120,21 @@
         <button id="stopCameraBtn"  onclick="stopCamera()"  style="display:none;">⏹ Detener</button>
     </div>
 
+    <!-- Info de calidad y confianza -->
     <div id="qualityInfo"></div>
+
+    <!-- Instrucción de perfil (visible durante transición) -->
+    <div id="profileHint" style="display:none; margin-top:10px; padding:10px;
+         background:#1a1a1a; border-radius:8px; border:1px solid #FFAA00; color:#FFAA00;
+         font-size:13px;">
+        📐 <strong>Paso 2:</strong> Gírate 90° hacia tu derecha para capturar el perfil.
+        Mantén los brazos relajados junto al cuerpo.
+    </div>
 </div>
 
 <!-- Canvas compartido -->
-<canvas id="canvas" style="border:1px solid #ccc; margin-top:20px; border-radius:8px; max-width:100%;"></canvas>
+<canvas id="canvas" style="border:1px solid #ccc; margin-top:20px;
+        border-radius:8px; max-width:100%;"></canvas>
 
 <h2>Resultado</h2>
 <div id="result"></div>
